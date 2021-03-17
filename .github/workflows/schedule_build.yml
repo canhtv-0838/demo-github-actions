@@ -1,0 +1,39 @@
+name: Schedule Build
+
+# Trigger Workflow every midnight UTC
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+#workflow_dispatch helps run workflow anytime with a single click.
+
+jobs:
+  build:
+    name: Scheduling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Restore Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Upload test reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/'
+
+      - name: Build project
+        run: ./gradlew assemble
